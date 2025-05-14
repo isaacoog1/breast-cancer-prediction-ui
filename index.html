@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Breast Cancer Predictor</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 1rem 2rem;
+            background-color: #f0f4f8;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        input {
+            padding: 1rem;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 0.7rem;
+            margin-top: 10px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            border-radius: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px 40px;
+            /* max-width: 800px; */
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border: 2px solid #0066cc;
+            border-radius: 10px;
+            background-color: #FFF;
+            /* max-width: 800px; */
+            font-size: 1.1rem;
+            color: #003366;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Breast Cancer Prediction</h1>
+    <form id="predictForm">
+        <div class="grid" id="inputs"></div>
+        <button type="submit">Predict</button>
+    </form>
+    <div class="result" id="result"></div>
+
+    <script>
+        const featureNames = [
+            "mean radius", "mean texture", "mean perimeter", "mean area", "mean smoothness",
+            "mean compactness", "mean concavity", "mean concave points", "mean symmetry", "mean fractal dimension",
+            "radius error", "texture error", "perimeter error", "area error", "smoothness error",
+            "compactness error", "concavity error", "concave points error", "symmetry error", "fractal dimension error",
+            "worst radius", "worst texture", "worst perimeter", "worst area", "worst smoothness",
+            "worst compactness", "worst concavity", "worst concave points", "worst symmetry", "worst fractal dimension"
+        ];
+
+        const inputDiv = document.getElementById('inputs');
+        const resultDiv = document.getElementById('result');
+        const values = new Array(featureNames.length).fill('');
+        const predictBtn = document.querySelector('button');
+
+        featureNames.forEach((feature, i) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-wrapper';
+
+            const label = document.createElement('label');
+            label.htmlFor = 'input-' + i;
+            label.innerText = feature.charAt(0).toUpperCase() + feature.slice(1);
+
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = 'input-' + i;
+            input.placeholder = feature;
+            input.step = 'any';
+            input.required = true;
+            input.value = '';
+            input.oninput = (e) => values[i] = e.target.value || '';
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(input);
+            inputDiv.appendChild(wrapper);
+        });
+
+        document.getElementById('predictForm').onsubmit = async (e) => {
+            e.preventDefault();
+            predictBtn.disabled = true;
+            predictBtn.innerText = 'Predicting...';
+
+            try {
+                const nums = values.map(Number);
+                const res = await fetch('http://localhost:8000/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ values: nums })
+                });
+
+                const json = await res.json();
+                resultDiv.innerHTML = `
+        <p><strong>Prediction:</strong> ${json.prediction === 1 ? 'Malignant' : 'Benign'}</p>
+        <p><strong>Probabilities:</strong> ${json.probabilities.map(p => p.toFixed(4)).join(', ')}</p>
+      `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color:red;">An error occurred. Please try again.</p>`;
+            } finally {
+                predictBtn.disabled = false;
+                predictBtn.innerText = 'Predict';
+            }
+        };
+    </script>
+
+</body>
+
+</html>
