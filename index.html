@@ -127,7 +127,7 @@
 
             try {
                 const nums = values.map(Number);
-                const res = await fetch('http://localhost:8000/predict', {
+                const res = await fetch('https://breast-cancer-prediction-api-iuxt.onrender.com/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ values: nums })
